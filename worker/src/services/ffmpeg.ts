@@ -86,14 +86,42 @@ export interface ClipOptions {
 export async function generateClip(options: ClipOptions): Promise<void> {
   const { videoPath, outputPath, startTime, endTime, srtPath } = options
 
-  // Build filter complex for cropping to 9:16 and optionally adding subtitles
+  // Build filter complex for cropping to 9:16
   let filterComplex = 'crop=ih*9/16:ih,scale=1080:1920'
   
   if (srtPath && fs.existsSync(srtPath)) {
-    // Add subtitles with styling
-    // Note: Need to escape special characters in path for FFmpeg
+    // TikTok/Shorts style captions:
+    // - Large bold font
+    // - White text with black outline
+    // - Positioned at bottom center
+    // - Each word/phrase pops in sync with speech
     const escapedSrtPath = srtPath.replace(/'/g, "'\\''").replace(/:/g, '\\:')
-    filterComplex += `,subtitles='${escapedSrtPath}':force_style='FontSize=24,FontName=Arial,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,Shadow=1,MarginV=50'`
+    
+    // Style breakdown (MrBeast/Viral Shorts style):
+    // FontSize=18      - Smaller, cleaner
+    // FontName=Arial   - Clean bold sans-serif
+    // Bold=1           - Essential for readability
+    // PrimaryColour    - White (&HFFFFFF)
+    // OutlineColour    - Black (&H000000)
+    // BackColour       - Transparent (No box!)
+    // Outline=4        - Thick outline (the MrBeast signature)
+    // Shadow=0         - No drop shadow, just outline
+    // MarginV=70       - Positioned safely above bottom UI
+    // Alignment=2      - Bottom center
+    const subtitleStyle = [
+      'FontSize=16',
+      'FontName=Arial',
+      'Bold=1',
+      'PrimaryColour=&HFFFFFF',
+      'OutlineColour=&H000000',
+      'BackColour=&H00000000',
+      'Outline=4',
+      'Shadow=0',
+      'MarginV=20',
+      'Alignment=2',
+    ].join(',')
+    
+    filterComplex += `,subtitles='${escapedSrtPath}':force_style='${subtitleStyle}'`
   }
 
   return new Promise((resolve, reject) => {
@@ -161,13 +189,31 @@ export function generateSRT(
     const adjustedStart = Math.max(0, seg.start - clipStart)
     const adjustedEnd = Math.min(clipEnd - clipStart, seg.end - clipStart)
 
+    // Skip if segment is too short
+    if (adjustedEnd - adjustedStart < 0.1) continue
+
     // Format times as SRT timestamps (HH:MM:SS,mmm)
     const startTs = formatSRTTime(adjustedStart)
     const endTs = formatSRTTime(adjustedEnd)
 
+    // Clean up the text - uppercase for impact (Viral style)
+    const baseText = seg.text.trim().toUpperCase()
+    
+    if (!baseText) continue
+
+    // Add a subtle \"pop\" animation using ASS override tags understood by libass:
+    // - \\fad(80,80) → quick fade-in / fade-out (80 ms)
+    // - first \\t → scale up slightly (115%) over 120 ms
+    // - second \\t → settle back to 100% over next 80 ms
+    const animatedText =
+      `{\\fad(80,80)` +
+      `\\t(0,120,\\fscx115\\fscy115)` +
+      `\\t(120,200,\\fscx100\\fscy100)}` +
+      baseText
+
     srtContent += `${index}\n`
     srtContent += `${startTs} --> ${endTs}\n`
-    srtContent += `${seg.text}\n\n`
+    srtContent += `${animatedText}\n\n`
     index++
   }
 
@@ -188,4 +234,3 @@ function pad(num: number, size: number = 2): string {
   while (s.length < size) s = '0' + s
   return s
 }
-

@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { MAX_CLIPS_PER_VIDEO, type PlanId } from '@/lib/constants'
+import { getLimitsForPlan, resolvePlan } from '@/lib/plan'
 import { NextResponse } from 'next/server'
 
 interface ClipRequest {
@@ -36,9 +38,60 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
 
-    // Validate clip count
-    if (clips.length > 10) {
-      return NextResponse.json({ error: 'Maximum 10 clips per request' }, { status: 400 })
+    // Validate clip count per request
+    if (clips.length > MAX_CLIPS_PER_VIDEO) {
+      return NextResponse.json(
+        { error: `Maximum ${MAX_CLIPS_PER_VIDEO} clips per request` },
+        { status: 400 }
+      )
+    }
+
+    // Determine user's plan (defaults to free if no usage row or plan set)
+    let plan: PlanId = 'free'
+    try {
+      const { data: usageRows, error: usageError } = await supabase
+        .from('user_usage')
+        .select('plan')
+        .eq('user_id', user.id)
+        .limit(1)
+
+      if (!usageError && usageRows && usageRows.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        plan = resolvePlan((usageRows[0] as any).plan)
+      }
+    } catch {
+      // ignore and keep default plan
+    }
+
+    const { maxClips } = getLimitsForPlan(plan)
+    const planLabel = plan === 'free' ? 'Free' : plan === 'creator' ? 'Creator' : 'Pro'
+
+    // Enforce per-user clip limit based on plan
+    const { count: clipCount, error: clipCountError } = await supabase
+      .from('clips')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (clipCountError) {
+      console.error('Failed to count user clips:', clipCountError)
+    }
+
+    const clipsGenerated = clipCount ?? 0
+    const requestedCount = clips.length
+
+    if (clipsGenerated >= maxClips) {
+      return NextResponse.json(
+        { error: `${planLabel} plan limit reached: you can generate up to ${maxClips} clips.` },
+        { status: 403 }
+      )
+    }
+
+    if (clipsGenerated + requestedCount > maxClips) {
+      const remaining = maxClips - clipsGenerated
+      return NextResponse.json(
+        { error: `You can generate ${remaining} more clip${remaining === 1 ? '' : 's'} on your ${planLabel} plan.` },
+        { status: 403 }
+      )
     }
 
     const clip_ids: string[] = []

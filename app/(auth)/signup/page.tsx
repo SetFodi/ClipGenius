@@ -2,20 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { Sparkles, Loader2, Check } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const { toast } = useToast()
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -42,7 +40,6 @@ export default function SignupPage() {
       toast({
         title: 'Check your email',
         description: 'We sent you a confirmation link to complete your signup.',
-        variant: 'success',
       })
     }
 
@@ -50,28 +47,28 @@ export default function SignupPage() {
   }
 
   const features = [
-    '3 videos per day on free tier',
+    '5 free video uploads',
+    '3 free clip exports',
     'AI-powered transcription',
-    'Automatic 9:16 cropping',
-    'Burned-in captions',
+    'Automatic captions',
   ]
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-6 gradient-bg">
+      <div className="w-full max-w-sm">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-neon-cyan/20 border border-neon-cyan/50 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-neon-cyan" />
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+            <span className="text-white font-black text-base">C</span>
           </div>
-          <span className="font-bold text-2xl">
-            Clip<span className="text-neon-cyan">Genius</span>
+          <span className="font-semibold text-xl">
+            clip<span className="text-primary">genius</span>
           </span>
         </Link>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Create your account</CardTitle>
+        <Card className="bg-card border-border/50">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-xl">Create your account</CardTitle>
             <CardDescription>
               Start creating viral clips in minutes
             </CardDescription>
@@ -88,6 +85,7 @@ export default function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="bg-background"
                 />
               </div>
 
@@ -102,6 +100,7 @@ export default function SignupPage() {
                   required
                   minLength={6}
                   disabled={isLoading}
+                  className="bg-background"
                 />
                 <p className="text-xs text-muted-foreground">
                   Must be at least 6 characters
@@ -111,7 +110,6 @@ export default function SignupPage() {
               <Button
                 type="submit"
                 className="w-full"
-                variant="neon"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -126,22 +124,22 @@ export default function SignupPage() {
             </form>
 
             {/* Features list */}
-            <div className="mt-6 pt-6 border-t border-border/40">
+            <div className="mt-6 pt-6 border-t border-border/50">
               <p className="text-sm font-medium mb-3">What you get:</p>
               <ul className="space-y-2">
                 {features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="w-4 h-4 text-neon-green" />
+                    <Check className="w-4 h-4 text-primary" />
                     {feature}
                   </li>
                 ))}
               </ul>
             </div>
           </CardContent>
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center pt-0">
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="text-neon-cyan hover:underline">
+              <Link href="/login" className="text-primary hover:underline">
                 Sign in
               </Link>
             </p>
@@ -151,4 +149,3 @@ export default function SignupPage() {
     </div>
   )
 }
-

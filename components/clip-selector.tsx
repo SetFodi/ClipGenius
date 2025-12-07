@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn, formatDuration } from '@/lib/utils'
-import { Play, Pause, Trash2, Plus, Flag, FlagOff } from 'lucide-react'
+import { Play, Trash2, Flag, FlagOff } from 'lucide-react'
 import type { ClipSelection } from '@/lib/types'
 import { MAX_CLIPS_PER_VIDEO } from '@/lib/constants'
 
@@ -40,7 +40,6 @@ export function ClipSelector({
   const handleMarkEnd = () => {
     if (markStart === null) return
     if (currentTime <= markStart) {
-      // Can't end before start
       return
     }
     if (selections.length >= MAX_CLIPS_PER_VIDEO) {
@@ -65,11 +64,10 @@ export function ClipSelector({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Mark controls */}
-      <div className="p-4 border-b border-border/40">
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           {markStart === null ? (
             <Button
-              variant="neon"
               onClick={handleMarkStart}
               className="flex-1"
               disabled={selections.length >= MAX_CLIPS_PER_VIDEO}
@@ -80,7 +78,6 @@ export function ClipSelector({
           ) : (
             <>
               <Button
-                variant="neon"
                 onClick={handleMarkEnd}
                 className="flex-1"
                 disabled={currentTime <= markStart}
@@ -100,7 +97,7 @@ export function ClipSelector({
           </p>
         )}
         {selections.length >= MAX_CLIPS_PER_VIDEO && (
-          <p className="text-xs text-neon-orange mt-2">
+          <p className="text-xs text-destructive mt-2">
             Maximum {MAX_CLIPS_PER_VIDEO} clips reached
           </p>
         )}
@@ -112,8 +109,8 @@ export function ClipSelector({
           <div className="p-4 space-y-3">
             {selections.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="mb-2">No clips selected</p>
-                <p className="text-sm">
+                <p className="text-sm mb-1">No clips selected</p>
+                <p className="text-xs">
                   Use the video player to find moments, then mark start and end points.
                 </p>
               </div>
@@ -121,14 +118,14 @@ export function ClipSelector({
               selections.map((clip) => (
                 <Card
                   key={clip.id}
-                  className="border-border/40 bg-card/50 hover:border-neon-cyan/30 transition-colors"
+                  className="bg-secondary/50 border-border/50 hover:border-primary/30 transition-colors"
                 >
                   <CardContent className="p-3">
                     <div className="flex items-start gap-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="shrink-0"
+                        className="shrink-0 h-8 w-8"
                         onClick={() => onSeekTo(clip.start_time)}
                       >
                         <Play className="w-4 h-4" />
@@ -141,17 +138,17 @@ export function ClipSelector({
                             onUpdateClip(clip.id, { title: e.target.value })
                           }
                           placeholder="Clip title"
-                          className="mb-2 h-8 text-sm"
+                          className="mb-2 h-8 text-sm bg-background"
                         />
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-mono bg-secondary px-1.5 py-0.5 rounded">
+                          <span className="font-mono bg-background/50 px-1.5 py-0.5 rounded">
                             {formatDuration(clip.start_time)}
                           </span>
                           <span>→</span>
-                          <span className="font-mono bg-secondary px-1.5 py-0.5 rounded">
+                          <span className="font-mono bg-background/50 px-1.5 py-0.5 rounded">
                             {formatDuration(clip.end_time)}
                           </span>
-                          <span className="text-neon-cyan">
+                          <span className="text-primary">
                             ({formatDuration(clip.end_time - clip.start_time)})
                           </span>
                         </div>
@@ -160,7 +157,7 @@ export function ClipSelector({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => onRemoveClip(clip.id)}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -176,7 +173,7 @@ export function ClipSelector({
 
       {/* Summary */}
       {selections.length > 0 && (
-        <div className="p-4 border-t border-border/40 bg-card/30">
+        <div className="p-4 border-t border-border/50 bg-secondary/30">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
               {selections.length} clip{selections.length !== 1 ? 's' : ''} selected
@@ -193,4 +190,3 @@ export function ClipSelector({
     </div>
   )
 }
-

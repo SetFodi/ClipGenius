@@ -10,18 +10,16 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { UserNav } from '@/components/user-nav'
 import { 
-  Sparkles, 
   Download, 
   Trash2, 
   Loader2, 
   Video,
-  Play,
   RefreshCw,
   ArrowLeft
 } from 'lucide-react'
 import { formatDuration, formatRelativeTime } from '@/lib/utils'
 import { JOB_POLL_INTERVAL } from '@/lib/constants'
-import type { Clip, Job } from '@/lib/types'
+import type { Clip } from '@/lib/types'
 import type { User } from '@supabase/supabase-js'
 
 interface ClipWithUrl extends Clip {
@@ -34,9 +32,9 @@ function getStatusBadge(status: string) {
     case 'pending':
       return <Badge variant="secondary">Pending</Badge>
     case 'processing':
-      return <Badge variant="processing">Processing...</Badge>
+      return <Badge className="bg-primary/20 text-primary border-primary/30">Processing...</Badge>
     case 'ready':
-      return <Badge variant="success">Ready</Badge>
+      return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Ready</Badge>
     case 'error':
       return <Badge variant="destructive">Error</Badge>
     default:
@@ -62,7 +60,6 @@ export default function ClipsPage() {
     }
     setUser(user)
 
-    // Fetch clips with video info
     const { data: clipsData, error } = await supabase
       .from('clips')
       .select(`
@@ -77,7 +74,6 @@ export default function ClipsPage() {
       return
     }
 
-    // Get public URLs for ready clips
     const clipsWithUrls: ClipWithUrl[] = await Promise.all(
       (clipsData || []).map(async (clip: any) => {
         let publicUrl: string | undefined
@@ -103,7 +99,6 @@ export default function ClipsPage() {
     fetchClips()
   }, [fetchClips])
 
-  // Poll for clip updates
   useEffect(() => {
     const processingClips = clips.filter(
       c => c.status === 'pending' || c.status === 'processing'
@@ -126,7 +121,6 @@ export default function ClipsPage() {
           if (index !== -1 && newClips[index].status !== updated.status) {
             hasUpdates = true
             
-            // Get public URL if now ready
             let publicUrl: string | undefined
             if (updated.storage_path && updated.status === 'ready') {
               const { data } = supabase.storage
@@ -145,7 +139,6 @@ export default function ClipsPage() {
               toast({
                 title: 'Clip ready!',
                 description: `"${updated.title || 'Your clip'}" is ready to download.`,
-                variant: 'success',
               })
             }
           }
@@ -214,7 +207,7 @@ export default function ClipsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-neon-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -223,16 +216,16 @@ export default function ClipsPage() {
   const processingClips = clips.filter(c => c.status === 'pending' || c.status === 'processing')
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-neon-cyan/20 border border-neon-cyan/50 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-neon-cyan" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+              <span className="text-white font-black text-sm">C</span>
             </div>
-            <span className="font-bold text-xl">
-              Clip<span className="text-neon-cyan">Genius</span>
+            <span className="font-semibold text-lg tracking-tight">
+              clip<span className="text-primary">genius</span>
             </span>
           </Link>
           
@@ -240,20 +233,20 @@ export default function ClipsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors">
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">My Clips</h1>
-            <p className="text-muted-foreground">
-              {clips.length} clip{clips.length !== 1 ? 's' : ''} • {readyClips.length} ready to download
+            <h1 className="text-xl font-semibold">My Clips</h1>
+            <p className="text-sm text-muted-foreground">
+              {clips.length} clip{clips.length !== 1 ? 's' : ''} • {readyClips.length} ready
             </p>
           </div>
-          <Button variant="outline" onClick={fetchClips}>
+          <Button variant="outline" size="sm" onClick={fetchClips}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -262,29 +255,24 @@ export default function ClipsPage() {
         {/* Processing clips */}
         {processingClips.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-neon-cyan" />
+            <h2 className="text-sm font-medium mb-4 flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
               Processing ({processingClips.length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {processingClips.map((clip) => (
-                <Card key={clip.id} className="border-border/40 bg-card/50">
+                <Card key={clip.id} className="bg-card border-border/50">
                   <CardContent className="p-4">
                     <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center mb-4">
                       <div className="text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-neon-cyan mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">Generating...</p>
+                        <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">Generating...</p>
                       </div>
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{clip.title || 'Untitled clip'}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {clip.videoFilename}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDuration(clip.end_time - clip.start_time)}
-                        </p>
+                        <p className="font-medium text-sm truncate">{clip.title || 'Untitled'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{clip.videoFilename}</p>
                       </div>
                       {getStatusBadge(clip.status)}
                     </div>
@@ -297,41 +285,37 @@ export default function ClipsPage() {
 
         {/* Ready clips */}
         {clips.length === 0 ? (
-          <Card className="border-border/40 bg-card/50 border-dashed">
+          <Card className="bg-card border-border/50 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-16 h-16 rounded-full bg-neon-cyan/10 border border-neon-cyan/30 flex items-center justify-center mb-4">
-                <Video className="w-8 h-8 text-neon-cyan" />
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Video className="w-7 h-7 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No clips yet</h3>
-              <p className="text-muted-foreground text-center max-w-sm mb-6">
+              <h3 className="text-lg font-medium mb-2">No clips yet</h3>
+              <p className="text-muted-foreground text-center max-w-sm mb-6 text-sm">
                 Upload a video and select moments to create your first viral clips.
               </p>
               <Link href="/dashboard">
-                <Button variant="neon">
-                  Go to Dashboard
-                </Button>
+                <Button>Go to Dashboard</Button>
               </Link>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {readyClips.map((clip) => (
-              <Card key={clip.id} className="border-border/40 bg-card/50 group hover:border-neon-cyan/30 transition-colors">
+              <Card key={clip.id} className="bg-card border-border/50 group hover:border-primary/30 transition-colors">
                 <CardContent className="p-4">
                   {/* Video preview */}
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
                     {clip.publicUrl ? (
-                      <>
-                        <video
-                          src={clip.publicUrl}
-                          className="w-full h-full object-contain"
-                          controls
-                          playsInline
-                        />
-                      </>
+                      <video
+                        src={clip.publicUrl}
+                        className="w-full h-full object-contain"
+                        controls
+                        playsInline
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Video className="w-8 h-8 text-muted-foreground" />
+                        <Video className="w-6 h-6 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -339,15 +323,13 @@ export default function ClipsPage() {
                   {/* Clip info */}
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{clip.title || 'Untitled clip'}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {clip.videoFilename}
-                      </p>
+                      <p className="font-medium text-sm truncate">{clip.title || 'Untitled'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{clip.videoFilename}</p>
                     </div>
                     {getStatusBadge(clip.status)}
                   </div>
 
-                  {/* Meta info */}
+                  {/* Meta */}
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                     <span>{formatDuration(clip.end_time - clip.start_time)}</span>
                     <span>•</span>
@@ -357,7 +339,6 @@ export default function ClipsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2">
                     <Button
-                      variant="neon"
                       size="sm"
                       className="flex-1"
                       onClick={() => handleDownload(clip)}
@@ -388,4 +369,3 @@ export default function ClipsPage() {
     </div>
   )
 }
-

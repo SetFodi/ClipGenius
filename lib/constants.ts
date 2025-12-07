@@ -14,8 +14,30 @@ export const ACCEPTED_VIDEO_TYPES = {
 // Job polling interval (ms)
 export const JOB_POLL_INTERVAL = 3000
 
-// Rate limits (free tier)
-export const MAX_VIDEOS_PER_DAY = 3
+// Plans & rate limits
+export const PLANS = ['free', 'creator', 'pro'] as const
+export type PlanId = (typeof PLANS)[number]
+
+// Hard per-user caps per plan (lifetime for MVP, not monthly)
+// You can tighten or loosen these later if infra costs change.
+export const PLAN_LIMITS: Record<PlanId, { maxVideos: number; maxClips: number }> = {
+  free: {
+    maxVideos: 5,
+    maxClips: 3,
+  },
+  creator: {
+    maxVideos: 100,
+    maxClips: 300,
+  },
+  pro: {
+    maxVideos: 500,
+    maxClips: 1500,
+  },
+}
+
+// Backwards-compat aliases (used in a few places)
+export const MAX_FREE_VIDEOS = PLAN_LIMITS.free.maxVideos
+export const MAX_FREE_CLIPS = PLAN_LIMITS.free.maxClips
 export const MAX_CLIPS_PER_VIDEO = 10
 
 // Video status options

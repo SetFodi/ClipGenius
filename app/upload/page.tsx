@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/components/ui/use-toast'
 import { UploadZone } from '@/components/upload-zone'
-import { Sparkles, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle, Zap } from 'lucide-react'
 import { MAX_FILE_SIZE_MB, MAX_DURATION_MINUTES } from '@/lib/constants'
+import { getLimitsForPlan, resolvePlan } from '@/lib/plan'
 
 type UploadState = 'idle' | 'uploading' | 'creating-job' | 'done' | 'error'
 
@@ -40,14 +41,42 @@ export default function UploadPage() {
         throw new Error('Not authenticated')
       }
 
+      // Determine user's plan (defaults to free if no usage row or plan set)
+      let plan = resolvePlan()
+      try {
+        const { data: usageRows, error: usageError } = await supabase
+          .from('user_usage')
+          .select('plan')
+          .eq('user_id', user.id)
+          .limit(1)
+
+        if (!usageError && usageRows && usageRows.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          plan = resolvePlan((usageRows[0] as any).plan)
+        }
+      } catch {
+        // ignore and keep default plan
+      }
+
+      const { maxVideos } = getLimitsForPlan(plan)
+      const planLabel = plan === 'free' ? 'Free' : plan === 'creator' ? 'Creator' : 'Pro'
+
+      // Check video limit based on plan
+      const { count: videoCount } = await supabase
+        .from('videos')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      if (videoCount !== null && videoCount >= maxVideos) {
+        throw new Error(`${planLabel} plan limit reached: you can upload up to ${maxVideos} videos.`)
+      }
+
       // Generate storage path
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
       const storagePath = `${user.id}/${fileName}`
 
       // Upload to Supabase Storage with progress tracking
-      // Note: Supabase JS doesn't support upload progress natively, 
-      // so we'll simulate progress for better UX
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90))
       }, 500)
@@ -112,7 +141,6 @@ export default function UploadPage() {
       toast({
         title: 'Upload complete!',
         description: 'Your video is now being transcribed.',
-        variant: 'success',
       })
 
       // Redirect to video page after a short delay
@@ -134,44 +162,44 @@ export default function UploadPage() {
   const isUploading = uploadState === 'uploading' || uploadState === 'creating-job'
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-neon-cyan/20 border border-neon-cyan/50 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-neon-cyan" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+              <span className="text-white font-black text-sm">C</span>
             </div>
-            <span className="font-bold text-xl">
-              Clip<span className="text-neon-cyan">Genius</span>
+            <span className="font-semibold text-lg tracking-tight">
+              clip<span className="text-primary">genius</span>
             </span>
           </Link>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="max-w-xl mx-auto px-6 py-8">
         {/* Back button */}
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </Link>
 
-        <Card className="border-border/40 bg-card/50">
+        <Card className="bg-card border-border/50">
           <CardHeader>
-            <CardTitle className="text-2xl">Upload Video</CardTitle>
+            <CardTitle>Upload Video</CardTitle>
             <CardDescription>
-              Upload your gaming footage to transcribe and create clips. 
+              Upload your video to transcribe and create clips. 
               Max {MAX_FILE_SIZE_MB}MB, {MAX_DURATION_MINUTES} minutes.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {uploadState === 'done' ? (
               <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-neon-green/20 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-neon-green" />
+                <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-7 h-7 text-green-400" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Upload Complete!</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="text-lg font-medium mb-2">Upload Complete!</h3>
+                <p className="text-muted-foreground text-sm mb-4">
                   Redirecting to your video...
                 </p>
                 <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
@@ -190,16 +218,15 @@ export default function UploadPage() {
                         {uploadState === 'uploading' && 'Uploading...'}
                         {uploadState === 'creating-job' && 'Setting up transcription...'}
                       </span>
-                      <span className="text-neon-cyan">{uploadProgress}%</span>
+                      <span className="text-primary">{uploadProgress}%</span>
                     </div>
-                    <Progress value={uploadProgress} className="h-2" />
+                    <Progress value={uploadProgress} className="h-1.5" />
                   </div>
                 )}
 
                 <Button
                   onClick={handleUpload}
                   disabled={!file || isUploading}
-                  variant="neon"
                   className="w-full"
                   size="lg"
                 >
@@ -210,7 +237,7 @@ export default function UploadPage() {
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 mr-2" />
+                      <Zap className="w-4 h-4 mr-2" />
                       Upload & Transcribe
                     </>
                   )}
@@ -221,8 +248,8 @@ export default function UploadPage() {
         </Card>
 
         {/* Tips */}
-        <div className="mt-6 p-4 rounded-lg border border-border/40 bg-card/30">
-          <h4 className="font-medium mb-2">Tips for best results:</h4>
+        <div className="mt-6 p-4 rounded-xl bg-card border border-border/50">
+          <h4 className="font-medium mb-2 text-sm">Tips for best results</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Use clear audio for better transcription accuracy</li>
             <li>• Shorter clips (5-20 min) process faster</li>
@@ -233,4 +260,3 @@ export default function UploadPage() {
     </div>
   )
 }
-

@@ -13,12 +13,12 @@ import { TranscriptViewer } from '@/components/transcript-viewer'
 import { ClipSelector } from '@/components/clip-selector'
 import { UserNav } from '@/components/user-nav'
 import { 
-  Sparkles, 
   ArrowLeft, 
   Loader2, 
   AlertCircle,
   Scissors,
-  RefreshCw
+  RefreshCw,
+  Zap
 } from 'lucide-react'
 import { JOB_POLL_INTERVAL, PROCESSING_STAGES } from '@/lib/constants'
 import type { Video, Transcript, Job, ClipSelection, TranscriptSegment } from '@/lib/types'
@@ -151,7 +151,6 @@ export default function VideoPage() {
           toast({
             title: 'Transcription complete!',
             description: 'You can now select clips from your video.',
-            variant: 'success',
           })
         } else if (jobData.status === 'failed') {
           setVideo(prev => prev ? { ...prev, status: 'error' } : null)
@@ -212,25 +211,24 @@ export default function VideoPage() {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to generate clips')
-      }
-
       const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate clips')
+      }
 
       toast({
         title: 'Clips queued!',
         description: `${data.clip_ids.length} clip(s) are being generated.`,
-        variant: 'success',
       })
 
       // Clear selections and redirect to clips page
       setClipSelections([])
       router.push('/clips')
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to generate clips. Please try again.',
+        description: error.message || 'Failed to generate clips. Please try again.',
         variant: 'destructive',
       })
     } finally {
@@ -291,7 +289,7 @@ export default function VideoPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-neon-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -309,16 +307,16 @@ export default function VideoPage() {
   const stageMessage = PROCESSING_STAGES[processingStage as keyof typeof PROCESSING_STAGES] || 'Processing...'
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-neon-cyan/20 border border-neon-cyan/50 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-neon-cyan" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+              <span className="text-white font-black text-sm">C</span>
             </div>
-            <span className="font-bold text-xl">
-              Clip<span className="text-neon-cyan">Genius</span>
+            <span className="font-semibold text-lg tracking-tight">
+              clip<span className="text-primary">genius</span>
             </span>
           </Link>
           
@@ -326,20 +324,19 @@ export default function VideoPage() {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-6">
         {/* Back button and title */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-2 transition-colors">
+            <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors">
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bold">{video.filename}</h1>
+            <h1 className="text-xl font-semibold">{video.filename}</h1>
           </div>
           
           {isReady && (
             <Button
-              variant="neon"
               onClick={handleGenerateClips}
               disabled={clipSelections.length === 0 || isGenerating}
             >
@@ -360,16 +357,16 @@ export default function VideoPage() {
 
         {/* Processing state */}
         {isProcessing && (
-          <Card className="border-border/40 bg-card/50 mb-6">
+          <Card className="bg-card border-border/50 mb-6">
             <CardContent className="flex items-center gap-4 py-8">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full border-4 border-neon-cyan/30 border-t-neon-cyan animate-spin" />
-                <Sparkles className="w-6 h-6 text-neon-cyan absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <div className="w-14 h-14 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+                <Zap className="w-5 h-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Transcribing your video...</h3>
-                <p className="text-muted-foreground">{stageMessage}</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <h3 className="font-semibold">Transcribing your video...</h3>
+                <p className="text-muted-foreground text-sm">{stageMessage}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   This usually takes 2-5 minutes depending on video length.
                 </p>
               </div>
@@ -379,14 +376,14 @@ export default function VideoPage() {
 
         {/* Error state */}
         {hasError && (
-          <Card className="border-destructive/50 bg-destructive/10 mb-6">
-            <CardContent className="flex items-center justify-between py-6">
+          <Card className="border-destructive/30 bg-destructive/5 mb-6">
+            <CardContent className="flex items-center justify-between py-5">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-destructive" />
+                <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Transcription failed</h3>
+                  <h3 className="font-medium">Transcription failed</h3>
                   <p className="text-sm text-muted-foreground">
                     {transcribeJob?.error || 'Something went wrong during transcription.'}
                   </p>
@@ -404,9 +401,9 @@ export default function VideoPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-16rem)]">
           {/* Video player */}
           <div className="lg:col-span-2">
-            <Card className="border-border/40 bg-card/50 h-full flex flex-col">
+            <Card className="bg-card border-border/50 h-full flex flex-col">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Video Preview</CardTitle>
+                <CardTitle className="text-base">Video Preview</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 min-h-0 pb-4">
                 {videoUrl ? (
@@ -430,11 +427,11 @@ export default function VideoPage() {
             {isReady ? (
               <>
                 {/* Transcript */}
-                <Card className="border-border/40 bg-card/50 flex-1 min-h-0 flex flex-col">
+                <Card className="bg-card border-border/50 flex-1 min-h-0 flex flex-col">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Transcript</CardTitle>
-                      <Badge variant="success">{segments.length} segments</Badge>
+                      <CardTitle className="text-base">Transcript</CardTitle>
+                      <Badge variant="secondary" className="text-xs">{segments.length} segments</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="flex-1 min-h-0 p-0">
@@ -448,9 +445,9 @@ export default function VideoPage() {
                 </Card>
 
                 {/* Clip selector */}
-                <Card className="border-border/40 bg-card/50 flex-1 min-h-0 flex flex-col">
+                <Card className="bg-card border-border/50 flex-1 min-h-0 flex flex-col">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Clip Selection</CardTitle>
+                    <CardTitle className="text-base">Clip Selection</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 min-h-0 p-0">
                     <ClipSelector
@@ -467,10 +464,10 @@ export default function VideoPage() {
                 </Card>
               </>
             ) : (
-              <Card className="border-border/40 bg-card/50 flex-1">
+              <Card className="bg-card border-border/50 flex-1">
                 <CardContent className="h-full flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {isProcessing
                         ? 'Transcript will appear here once processing is complete.'
                         : 'Transcript unavailable.'}
@@ -485,4 +482,3 @@ export default function VideoPage() {
     </div>
   )
 }
-

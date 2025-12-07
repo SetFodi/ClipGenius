@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { Sparkles, Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -45,7 +45,6 @@ function LoginForm() {
         toast({
           title: 'Check your email',
           description: 'We sent you a magic link to sign in.',
-          variant: 'success',
         })
       }
     } else {
@@ -70,23 +69,23 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-6 gradient-bg">
+      <div className="w-full max-w-sm">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-neon-cyan/20 border border-neon-cyan/50 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-neon-cyan" />
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-purple-400 flex items-center justify-center">
+            <span className="text-white font-black text-base">C</span>
           </div>
-          <span className="font-bold text-2xl">
-            Clip<span className="text-neon-cyan">Genius</span>
+          <span className="font-semibold text-xl">
+            clip<span className="text-primary">genius</span>
           </span>
         </Link>
 
-        <Card className="border-border/40 bg-card/50 backdrop-blur">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <Card className="bg-card border-border/50">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-xl">Welcome back</CardTitle>
             <CardDescription>
-              Sign in to continue creating viral clips
+              Sign in to continue creating
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -101,6 +100,7 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="bg-background"
                 />
               </div>
 
@@ -115,6 +115,7 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
+                    className="bg-background"
                   />
                 </div>
               )}
@@ -122,7 +123,6 @@ function LoginForm() {
               <Button
                 type="submit"
                 className="w-full"
-                variant="neon"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -145,17 +145,17 @@ function LoginForm() {
               <Button
                 type="button"
                 variant="ghost"
-                className="w-full text-muted-foreground"
+                className="w-full text-muted-foreground text-sm"
                 onClick={() => setIsMagicLink(!isMagicLink)}
               >
                 {isMagicLink ? 'Use password instead' : 'Sign in with magic link'}
               </Button>
             </div>
           </CardContent>
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center pt-0">
             <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-neon-cyan hover:underline">
+              <Link href="/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
             </p>
@@ -170,7 +170,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-neon-cyan" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
       <LoginForm />

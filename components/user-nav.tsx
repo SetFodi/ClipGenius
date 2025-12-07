@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LogOut, User, Scissors } from 'lucide-react'
+import { LogOut, User, Scissors, CreditCard } from 'lucide-react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import Link from 'next/link'
 
@@ -35,7 +35,7 @@ export function UserNav({ user }: UserNavProps) {
     : 'U'
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3">
       <Link href="/clips">
         <Button variant="ghost" size="sm">
           <Scissors className="w-4 h-4 mr-2" />
@@ -45,9 +45,9 @@ export function UserNav({ user }: UserNavProps) {
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10 border border-border">
-              <AvatarFallback className="bg-neon-cyan/10 text-neon-cyan">
+          <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+            <Avatar className="h-9 w-9 border border-border">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -56,8 +56,8 @@ export function UserNav({ user }: UserNavProps) {
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">Account</p>
-              <p className="text-xs leading-none text-muted-foreground">
+              <p className="text-sm font-medium">Account</p>
+              <p className="text-xs text-muted-foreground truncate">
                 {user.email}
               </p>
             </div>
@@ -75,6 +75,12 @@ export function UserNav({ user }: UserNavProps) {
               My Clips
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/pricing" className="cursor-pointer">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Upgrade
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
@@ -85,4 +91,3 @@ export function UserNav({ user }: UserNavProps) {
     </div>
   )
 }
-

@@ -53,14 +53,14 @@ export function UploadZone({ onFileSelect, disabled }: UploadZoneProps) {
 
   if (selectedFile) {
     return (
-      <div className="border-2 border-neon-cyan/30 rounded-xl p-8 bg-neon-cyan/5">
+      <div className="border border-primary/30 rounded-xl p-6 bg-primary/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-neon-cyan/20 flex items-center justify-center">
-              <FileVideo className="w-6 h-6 text-neon-cyan" />
+            <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+              <FileVideo className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">{selectedFile.name}</p>
+              <p className="font-medium text-sm">{selectedFile.name}</p>
               <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
             </div>
           </div>
@@ -69,6 +69,7 @@ export function UploadZone({ onFileSelect, disabled }: UploadZoneProps) {
             size="icon"
             onClick={clearSelection}
             disabled={disabled}
+            className="h-8 w-8"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -82,44 +83,44 @@ export function UploadZone({ onFileSelect, disabled }: UploadZoneProps) {
       <div
         {...getRootProps()}
         className={cn(
-          'border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all',
+          'border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all',
           isDragActive
-            ? 'border-neon-cyan bg-neon-cyan/10'
-            : 'border-border/40 hover:border-neon-cyan/50 hover:bg-neon-cyan/5',
+            ? 'border-primary bg-primary/5'
+            : 'border-border/50 hover:border-primary/50 hover:bg-primary/5',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3">
           <div className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center transition-colors',
-            isDragActive ? 'bg-neon-cyan/20' : 'bg-secondary'
+            'w-12 h-12 rounded-xl flex items-center justify-center transition-colors',
+            isDragActive ? 'bg-primary/10' : 'bg-secondary'
           )}>
             <Upload className={cn(
-              'w-8 h-8 transition-colors',
-              isDragActive ? 'text-neon-cyan' : 'text-muted-foreground'
+              'w-5 h-5 transition-colors',
+              isDragActive ? 'text-primary' : 'text-muted-foreground'
             )} />
           </div>
           <div>
-            <p className="font-medium text-lg mb-1">
+            <p className="font-medium mb-1">
               {isDragActive ? 'Drop your video here' : 'Drag & drop your video'}
             </p>
             <p className="text-sm text-muted-foreground">
               or click to browse
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>MP4, WebM, MOV</span>
             <span>•</span>
             <span>Max {MAX_FILE_SIZE_MB}MB</span>
             <span>•</span>
-            <span>Max {MAX_DURATION_MINUTES} minutes</span>
+            <span>Max {MAX_DURATION_MINUTES} min</span>
           </div>
         </div>
       </div>
       
       {error && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
+        <div className="mt-3 flex items-center gap-2 text-sm text-destructive">
           <AlertCircle className="w-4 h-4" />
           {error}
         </div>
@@ -127,4 +128,3 @@ export function UploadZone({ onFileSelect, disabled }: UploadZoneProps) {
     </div>
   )
 }
-

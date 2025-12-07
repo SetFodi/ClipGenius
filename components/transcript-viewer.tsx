@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn, formatDuration } from '@/lib/utils'
 import type { TranscriptSegment } from '@/lib/types'
@@ -18,8 +18,7 @@ export function TranscriptViewer({
   onSegmentClick,
   className,
 }: TranscriptViewerProps) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const activeRef = useRef<HTMLDivElement>(null)
+  const activeRef = useRef<HTMLButtonElement>(null)
 
   // Find the current active segment
   const activeIndex = segments.findIndex(
@@ -28,7 +27,7 @@ export function TranscriptViewer({
 
   // Auto-scroll to active segment
   useEffect(() => {
-    if (activeRef.current && scrollRef.current) {
+    if (activeRef.current) {
       activeRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
@@ -38,54 +37,45 @@ export function TranscriptViewer({
 
   if (segments.length === 0) {
     return (
-      <div className={cn('flex items-center justify-center text-muted-foreground', className)}>
-        No transcript available
+      <div className={cn('flex items-center justify-center p-6', className)}>
+        <p className="text-muted-foreground text-sm">No transcript available</p>
       </div>
     )
   }
 
   return (
     <ScrollArea className={cn('h-full', className)}>
-      <div ref={scrollRef} className="p-4 space-y-2">
+      <div className="p-4 space-y-1">
         {segments.map((segment, index) => {
           const isActive = index === activeIndex
+          const isPast = currentTime > segment.end
+
           return (
-            <div
+            <button
               key={index}
               ref={isActive ? activeRef : null}
               onClick={() => onSegmentClick(segment.start)}
               className={cn(
-                'p-3 rounded-lg cursor-pointer transition-all',
-                'hover:bg-neon-cyan/10 hover:border-neon-cyan/30',
-                'border border-transparent',
-                isActive && 'bg-neon-cyan/20 border-neon-cyan/50'
+                'w-full text-left px-3 py-2 rounded-lg transition-colors text-sm',
+                'hover:bg-secondary/70',
+                isActive && 'bg-primary/10 text-foreground',
+                isPast && !isActive && 'text-muted-foreground',
+                !isPast && !isActive && 'text-foreground'
               )}
             >
               <div className="flex items-start gap-3">
-                <span
-                  className={cn(
-                    'text-xs font-mono px-2 py-1 rounded shrink-0',
-                    isActive
-                      ? 'bg-neon-cyan text-background'
-                      : 'bg-secondary text-muted-foreground'
-                  )}
-                >
+                <span className={cn(
+                  'font-mono text-xs shrink-0 pt-0.5',
+                  isActive ? 'text-primary' : 'text-muted-foreground'
+                )}>
                   {formatDuration(segment.start)}
                 </span>
-                <p
-                  className={cn(
-                    'text-sm leading-relaxed',
-                    isActive ? 'text-foreground' : 'text-muted-foreground'
-                  )}
-                >
-                  {segment.text}
-                </p>
+                <span className="flex-1">{segment.text}</span>
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
     </ScrollArea>
   )
 }
-
